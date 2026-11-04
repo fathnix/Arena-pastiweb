@@ -1,13 +1,16 @@
+import axios from 'axios';
 import api from '../lib/api';
 import type { ApiResponse, LoginRequest, RegisterRequest, User } from '../lib/types';
 
 export const authApi = {
   async login(data: LoginRequest): Promise<User> {
+    await this.getCsrfCookie();
     const response = await api.post<ApiResponse<User>>('/auth/login', data);
     return response.data.data;
   },
 
   async register(data: RegisterRequest): Promise<User> {
+    await this.getCsrfCookie();
     const response = await api.post<ApiResponse<User>>('/auth/register', data);
     return response.data.data;
   },
@@ -22,6 +25,6 @@ export const authApi = {
   },
 
   async getCsrfCookie(): Promise<void> {
-    await api.get('/sanctum/csrf-cookie');
+    await axios.get('/sanctum/csrf-cookie', { withCredentials: true });
   },
 };
