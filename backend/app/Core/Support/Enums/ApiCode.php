@@ -1,0 +1,19 @@
+<?php
+
+namespace App\Core\Support\Enums;
+
+enum ApiCode: string
+{
+    case OK = 'OK';
+    case CREATED = 'CREATED';
+    case VALIDATION_ERROR = 'VALIDATION_ERROR';
+    case UNAUTHENTICATED = 'UNAUTHENTICATED';
+    case FORBIDDEN = 'FORBIDDEN';
+    case NOT_FOUND = 'NOT_FOUND';
+    case SLOT_UNAVAILABLE = 'SLOT_UNAVAILABLE';
+    case BOOKING_EXPIRED = 'BOOKING_EXPIRED';
+    case PAYMENT_INVALID = 'PAYMENT_INVALID';
+    case PAYMENT_ALREADY_VERIFIED = 'PAYMENT_ALREADY_VERIFIED';
+    case RATE_LIMITED = 'RATE_LIMITED';
+    case SERVER_ERROR = 'SERVER_ERROR';
+}
