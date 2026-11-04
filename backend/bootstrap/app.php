@@ -4,6 +4,7 @@ use App\Core\Exceptions\ApiException;
 use App\Core\Http\Middleware\AssignRequestId;
 use App\Core\Http\Responses\ApiResponse;
 use App\Core\Support\Enums\ApiCode;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -42,6 +43,16 @@ return Application::configure(basePath: dirname(__DIR__))
                     ApiCode::VALIDATION_ERROR,
                     422,
                     $e->errors()
+                );
+            }
+        });
+
+        $exceptions->render(function (AuthenticationException $e, Request $request) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return ApiResponse::error(
+                    'Unauthenticated.',
+                    ApiCode::UNAUTHENTICATED,
+                    401
                 );
             }
         });

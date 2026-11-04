@@ -45,44 +45,23 @@ class DatabaseSeeder extends Seeder
 
         $users = [
             [
-                'email' => 'superadmin@arenapasti.test',
+                'email' => 'superadmin@test.com',
                 'name' => 'Superadmin',
                 'phone' => '081234567890',
                 'role' => 'superadmin',
                 'branch_id' => null,
             ],
             [
-                'email' => 'admin@arenapasti.test',
+                'email' => 'admin@test.com',
                 'name' => 'Admin Pusat',
                 'phone' => '081234567891',
                 'role' => 'admin',
                 'branch_id' => $pusat->id,
             ],
             [
-                'email' => 'kasir@arenapasti.test',
-                'name' => 'Kasir Pusat',
-                'phone' => '081234567893',
-                'role' => 'admin',
-                'branch_id' => $pusat->id,
-            ],
-            [
-                'email' => 'admin.selatan@arenapasti.test',
-                'name' => 'Admin Cabang Selatan',
-                'phone' => '081234567894',
-                'role' => 'admin',
-                'branch_id' => $selatan->id,
-            ],
-            [
-                'email' => 'customer@arenapasti.test',
+                'email' => 'customer@test.com',
                 'name' => 'Customer Demo',
                 'phone' => '081234567892',
-                'role' => 'customer',
-                'branch_id' => null,
-            ],
-            [
-                'email' => 'customer2@arenapasti.test',
-                'name' => 'Customer Demo 2',
-                'phone' => '081234567895',
                 'role' => 'customer',
                 'branch_id' => null,
             ],

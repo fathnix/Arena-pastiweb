@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\PaymentMethod;
+use App\PaymentStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -31,6 +33,8 @@ class Payment extends Model
             'verified_at' => 'datetime',
             'expires_at' => 'datetime',
             'raw_response' => 'array',
+            'method' => PaymentMethod::class,
+            'status' => PaymentStatus::class,
         ];
     }
 

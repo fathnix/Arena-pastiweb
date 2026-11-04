@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\BookingStatus;
+use App\PaymentStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -43,6 +45,8 @@ class Booking extends Model
             'expires_at' => 'datetime',
             'checked_in_at' => 'datetime',
             'completed_at' => 'datetime',
+            'status' => BookingStatus::class,
+            'payment_status' => PaymentStatus::class,
         ];
     }
 

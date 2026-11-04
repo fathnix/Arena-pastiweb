@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\UserRole;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -36,6 +37,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'role' => UserRole::class,
         ];
     }
 
@@ -61,16 +63,16 @@ class User extends Authenticatable
 
     public function isSuperadmin(): bool
     {
-        return $this->role === 'superadmin';
+        return $this->role === UserRole::Superadmin;
     }
 
     public function isAdmin(): bool
     {
-        return $this->role === 'admin';
+        return $this->role === UserRole::Admin;
     }
 
     public function isCustomer(): bool
     {
-        return $this->role === 'customer';
+        return $this->role === UserRole::Customer;
     }
 }
