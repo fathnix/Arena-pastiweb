@@ -45,21 +45,21 @@ class DatabaseSeeder extends Seeder
 
         $users = [
             [
-                'email' => 'superadmin@test.com',
+                'email' => 'admin@gmail.com',
                 'name' => 'Superadmin',
                 'phone' => '081234567890',
                 'role' => 'superadmin',
                 'branch_id' => null,
             ],
             [
-                'email' => 'admin@test.com',
+                'email' => 'kasir@gmail.com',
                 'name' => 'Admin Pusat',
                 'phone' => '081234567891',
                 'role' => 'admin',
                 'branch_id' => $pusat->id,
             ],
             [
-                'email' => 'customer@test.com',
+                'email' => 'cust@gmail.com',
                 'name' => 'Customer Demo',
                 'phone' => '081234567892',
                 'role' => 'customer',

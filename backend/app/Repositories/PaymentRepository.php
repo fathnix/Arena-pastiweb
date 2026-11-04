@@ -20,12 +20,14 @@ class PaymentRepository
             ->first();
     }
 
-    public function getPendingVerifications(int $branchId, int $limit = 50): Collection
+    public function getPendingVerifications(?int $branchId, int $limit = 50): Collection
     {
         return Payment::with(['booking.field', 'booking.user'])
-            ->whereHas('booking', fn ($q) => $q->where('branch_id', $branchId))
+            ->when($branchId, fn ($query) => $query->whereHas(
+                'booking',
+                fn ($bookingQuery) => $bookingQuery->where('branch_id', $branchId)
+            ))
             ->where('status', PaymentStatus::Pending)
-            ->whereNotNull('proof_path')
             ->orderBy('created_at')
             ->limit($limit)
             ->get();
@@ -34,6 +36,7 @@ class PaymentRepository
     public function verify(int $paymentId, int $verifiedBy): bool
     {
         return Payment::where('id', $paymentId)
+            ->where('status', PaymentStatus::Pending)
             ->update([
                 'status' => PaymentStatus::Paid,
                 'verified_by' => $verifiedBy,
@@ -45,6 +48,7 @@ class PaymentRepository
     public function reject(int $paymentId, int $verifiedBy, string $reason): bool
     {
         return Payment::where('id', $paymentId)
+            ->where('status', PaymentStatus::Pending)
             ->update([
                 'status' => PaymentStatus::Failed,
                 'verified_by' => $verifiedBy,

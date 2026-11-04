@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Carbon;
 
 class FieldResource extends JsonResource
 {
@@ -17,6 +18,8 @@ class FieldResource extends JsonResource
             'capacity' => $this->capacity,
             'base_hourly_rate' => $this->base_hourly_rate,
             'description' => $this->description,
+            'open_time' => $this->open_time ? Carbon::parse($this->open_time)->format('H:i') : null,
+            'close_time' => $this->close_time ? Carbon::parse($this->close_time)->format('H:i') : null,
             'status' => $this->status,
             'branch' => [
                 'id' => $this->branch->id,

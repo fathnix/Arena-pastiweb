@@ -11,16 +11,19 @@ Aplikasi booking lapangan olahraga multi-cabang dengan 3 role: **Superadmin**, *
 
 ## Fitur
 
-- Auth: register, login, logout, `me` (token Bearer)
+- Auth: register, login, logout, `me`, update profil (token Bearer, tanpa cookie/CSRF)
 - Role-based access (customer / admin / superadmin) via Gate
-- Multi-cabang (branch) dari awal
-- Manajemen lapangan & slot waktu
-- **Anti double-booking** dengan transaksi DB + row lock
+- Multi-cabang (branch) dari awal + CRUD cabang
+- Manajemen pengguna (superadmin) & manajemen lapangan (admin cabang)
+- **Anti double-booking** dengan transaksi DB + row lock + rilis otomatis slot kedaluwarsa
 - Dynamic pricing: weekend +20%, jam sibuk (18–22) +15%, diskon 5% untuk ≥3 jam
-- Booking flow: pilih lapangan → tanggal → slot → checkout
+- Booking flow: pilih cabang → lapangan → tanggal → slot → checkout
 - Pembayaran manual: transfer bank (upload bukti) atau tunai, verifikasi admin
-- Check-in & complete booking oleh admin
+- Walk-in booking untuk customer yang datang langsung ke kasir
+- Check-in & complete booking oleh admin + e-ticket QR
+- Riwayat booking customer (aktif & selesai)
 - Dashboard analytics: revenue harian/bulanan, peak hours, performa cabang (superadmin)
+- Laporan revenue & peak hours + export CSV
 - 15 slot waktu (08:00–23:00) per lapangan
 
 ## Prasyarat
@@ -43,6 +46,13 @@ php artisan storage:link
 php artisan serve --host=0.0.0.0 --port=8000
 ```
 
+Agar booking `pending_payment` otomatis kedaluwarsa dan slotnya dilepas, jalankan scheduler
+(di cron server produksi):
+
+```bash
+* * * * * cd /path/to/backend && php artisan schedule:run >> /dev/null 2>&1
+```
+
 ## Setup Frontend
 
 ```bash
@@ -63,21 +73,25 @@ VITE_API_URL=http://192.168.101.67:8000/api/v1
 
 ## Akun Test (semua password: `password`)
 
-| Role | Email | Cabang |
-|---|---|---|
-| Superadmin | `superadmin@test.com` | Semua cabang |
-| Admin / Kasir | `admin@test.com` | Arena Pasti Pusat |
-| Customer | `customer@test.com` | — |
+| Role | Email | Password | Cabang |
+|---|---|---|---|
+| Superadmin | `admin@gmail.com` | `password` | Semua cabang |
+| Admin / Kasir | `kasir@gmail.com` | `password` | Arena Pasti Pusat |
+| Customer | `cust@gmail.com` | `password` | — |
 
 Seeder bisa dijalankan ulang (idempotent): `php artisan db:seed`
 
 ## Alur Pemakaian
 
-1. **Customer** login → Booking → pilih lapangan & slot → Booking Sekarang
+1. **Customer** login → Booking → pilih cabang, lapangan & slot → Booking Sekarang
 2. Di **Booking Saya** → Bayar Sekarang → pilih Transfer (upload bukti) atau Tunai
 3. **Admin** login → Verifikasi Pembayaran → Terima (booking jadi `confirmed`)
+   - Admin hanya melihat & memverifikasi pembayaran cabangnya sendiri.
+   - Pembayaran tunai tetap `pending` sampai kasir menekan Terima.
 4. Hari H, **Admin** → Manajemen Booking → Check-in → Selesai (`completed`)
-5. **Superadmin** melihat dashboard global semua cabang + performa per cabang
+5. **Admin** juga bisa membuat **Walk-in Booking** dari halaman Manajemen Booking.
+6. **Superadmin** melihat dashboard global semua cabang, mengelola cabang & pengguna,
+   dan melihat performa per cabang.
 
 ## Status Booking
 
@@ -92,13 +106,23 @@ Seeder bisa dijalankan ulang (idempotent): `php artisan db:seed`
 | POST | `/auth/login` | publik | dapat token |
 | POST | `/auth/logout` | auth | hapus token |
 | GET | `/auth/me` | auth | profil |
+| PUT | `/auth/profile` | auth | update profil/password |
+| GET | `/branches` | publik | cabang aktif |
+| GET | `/branches/all` | superadmin | semua cabang + statistik |
+| POST/PUT/DELETE | `/branches/{id}` | superadmin | CRUD cabang |
+| GET/POST/PUT/DELETE | `/users/{id}` | superadmin | CRUD pengguna |
 | GET | `/fields` | publik | daftar lapangan |
-| GET | `/fields/{id}/availability?date=` | publik | slot terisi/kosong |
-| POST | `/bookings` | auth | buat booking |
-| GET | `/bookings` | auth | list (customer: upcoming; admin: harian) |
+| POST/PUT/DELETE | `/fields/{id}` | admin | CRUD lapangan (cabang sendiri) |
+| GET | `/fields/{id}/availability?date=` | publik | slot terisi/kosong/lewat |
+| GET | `/time-slots` | publik | daftar slot waktu |
+| POST | `/bookings/quote` | auth | hitung harga sebelum booking |
+| POST | `/bookings` | auth | buat booking / walk-in |
+| GET | `/bookings` | auth | list (customer: aktif; admin: harian) |
+| GET | `/bookings/history` | auth | riwayat customer |
+| GET | `/bookings/{code}` | auth | detail booking |
 | POST | `/bookings/{code}/check-in` | admin | check-in |
 | POST | `/bookings/{id}/complete` | admin | selesaikan |
-| POST | `/bookings/{code}/cancel` | auth | batal |
+| POST | `/bookings/{code}/cancel` | auth | batal (slot langsung dilepas) |
 | POST | `/payments` | auth | buat pembayaran |
 | POST | `/payments/{id}/upload-proof` | auth | upload bukti |
 | GET | `/payments/pending` | admin | antrian verifikasi |

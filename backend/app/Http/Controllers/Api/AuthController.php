@@ -67,6 +67,29 @@ class AuthController extends Controller
         return new UserResource($request->user());
     }
 
+    public function updateProfile(Request $request)
+    {
+        $user = $request->user();
+
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'phone' => 'nullable|string|max:20',
+            'email' => ['required', 'email', 'unique:users,email,'.$user->id],
+            'password' => 'nullable|min:6|confirmed',
+        ]);
+
+        if (empty($data['password'])) {
+            unset($data['password']);
+        }
+
+        $user->update($data);
+
+        return response()->json([
+            'message' => 'Profil diperbarui.',
+            'user' => new UserResource($user->fresh()),
+        ]);
+    }
+
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
