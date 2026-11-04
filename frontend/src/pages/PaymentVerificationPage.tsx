@@ -19,6 +19,14 @@ interface Payment {
   };
 }
 
+const methodLabels: Record<string, string> = {
+  cash: 'Tunai',
+  bank_transfer: 'Transfer Bank',
+  qris: 'QRIS',
+  virtual_account: 'Virtual Account',
+  ewallet: 'E-Wallet',
+};
+
 export default function PaymentVerificationPage() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -99,7 +107,7 @@ export default function PaymentVerificationPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-4">
                   <div>
                     <div className="text-sm text-slate-500">Customer</div>
                     <div className="font-medium text-slate-900">
@@ -111,10 +119,31 @@ export default function PaymentVerificationPage() {
                     <div className="font-medium text-slate-900">{payment.booking.field?.name || '-'}</div>
                   </div>
                   <div>
+                    <div className="text-sm text-slate-500">Jadwal</div>
+                    <div className="font-medium text-slate-900">
+                      {new Date(`${payment.booking.booking_date}T00:00:00`).toLocaleDateString('id-ID', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                      })}
+                    </div>
+                    <div className="text-sm text-slate-600">
+                      {payment.booking.start_time} - {payment.booking.end_time}
+                    </div>
+                  </div>
+                  <div>
                     <div className="text-sm text-slate-500">Metode</div>
-                    <div className="font-medium text-slate-900 capitalize">{payment.method.replace('_', ' ')}</div>
+                    <div className="font-medium text-slate-900">
+                      {methodLabels[payment.method] ?? payment.method}
+                    </div>
                   </div>
                 </div>
+
+                {!payment.proof_path && (
+                  <div className="mb-4 p-3 bg-amber-50 border border-amber-200 text-amber-700 rounded-lg text-sm">
+                    Pembayaran tunai — terima uang di kasir terlebih dahulu, lalu klik Terima.
+                  </div>
+                )}
 
                 <div className="flex flex-wrap gap-3 items-center">
                   {payment.proof_path && (

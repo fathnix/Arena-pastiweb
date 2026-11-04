@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../lib/api';
 import Layout from '../components/Layout';
+import TicketModal from '../components/TicketModal';
 
 interface Payment {
   id: number;
@@ -8,6 +10,7 @@ interface Payment {
   method: string;
   status: string;
   proof_path?: string | null;
+  rejection_reason?: string | null;
 }
 
 interface Booking {
@@ -33,23 +36,31 @@ const statusLabels: Record<string, { label: string; color: string }> = {
 };
 
 export default function MyBookingsPage() {
+  const navigate = useNavigate();
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [history, setHistory] = useState<Booking[]>([]);
+  const [tab, setTab] = useState<'active' | 'history'>('active');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [payFor, setPayFor] = useState<Booking | null>(null);
   const [method, setMethod] = useState<'bank_transfer' | 'cash'>('bank_transfer');
   const [file, setFile] = useState<File | null>(null);
   const [paying, setPaying] = useState(false);
+  const [ticket, setTicket] = useState<Booking | null>(null);
 
   useEffect(() => {
-    fetchBookings();
+    fetchAll();
   }, []);
 
-  const fetchBookings = async () => {
+  const fetchAll = async () => {
     try {
-      const { data } = await api.get('/bookings');
-      setBookings(data.data);
-    } catch (err) {
+      const [activeRes, historyRes] = await Promise.all([
+        api.get('/bookings'),
+        api.get('/bookings/history'),
+      ]);
+      setBookings(activeRes.data.data);
+      setHistory(historyRes.data.data);
+    } catch {
       setError('Gagal memuat booking');
     } finally {
       setLoading(false);
@@ -60,7 +71,7 @@ export default function MyBookingsPage() {
     if (!confirm('Yakin ingin membatalkan booking ini?')) return;
     try {
       await api.post(`/bookings/${code}/cancel`);
-      fetchBookings();
+      fetchAll();
     } catch (err: any) {
       alert(err.response?.data?.message || 'Gagal membatalkan booking');
     }
@@ -74,6 +85,12 @@ export default function MyBookingsPage() {
 
   const handlePay = async () => {
     if (!payFor) return;
+
+    if (method === 'bank_transfer' && !file) {
+      alert('Silakan pilih file bukti transfer terlebih dahulu.');
+      return;
+    }
+
     setPaying(true);
     try {
       const { data } = await api.post('/payments', {
@@ -84,12 +101,7 @@ export default function MyBookingsPage() {
 
       const paymentId = data.payment.id;
 
-      if (method === 'bank_transfer') {
-        if (!file) {
-          alert('Silakan pilih file bukti transfer terlebih dahulu.');
-          setPaying(false);
-          return;
-        }
+      if (method === 'bank_transfer' && file) {
         const formData = new FormData();
         formData.append('proof', file);
         await api.post(`/payments/${paymentId}/upload-proof`, formData, {
@@ -97,9 +109,13 @@ export default function MyBookingsPage() {
         });
       }
 
-      alert(method === 'cash' ? 'Pembayaran tunai dicatat. Silakan bayar di kasir.' : 'Bukti transfer terkirim. Menunggu verifikasi admin.');
+      alert(
+        method === 'cash'
+          ? 'Pembayaran tunai dicatat. Silakan bayar di kasir agar booking dikonfirmasi.'
+          : 'Bukti transfer terkirim. Menunggu verifikasi admin.'
+      );
       setPayFor(null);
-      fetchBookings();
+      fetchAll();
     } catch (err: any) {
       alert(err.response?.data?.message || 'Gagal memproses pembayaran');
     } finally {
@@ -111,14 +127,50 @@ export default function MyBookingsPage() {
     new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 
   const formatDate = (dateStr: string) =>
-    new Date(dateStr).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    new Date(`${dateStr}T00:00:00`).toLocaleDateString('id-ID', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+
+  const paymentStatusLabels: Record<string, string> = {
+    unpaid: 'Belum dibayar',
+    pending: 'Menunggu verifikasi',
+    paid: 'Lunas',
+    failed: 'Ditolak',
+    expired: 'Kedaluwarsa',
+    refunded: 'Dikembalikan',
+  };
+
+  const list = tab === 'active' ? bookings : history;
 
   return (
     <Layout>
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900">Booking Saya</h1>
-          <p className="text-slate-600 mt-2">Kelola dan pantau status booking Anda</p>
+        <div className="mb-6 flex flex-wrap justify-between items-end gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900">Booking Saya</h1>
+            <p className="text-slate-600 mt-2">Kelola dan pantau status booking Anda</p>
+          </div>
+          <div className="inline-flex rounded-lg border border-slate-200 bg-white p-1">
+            <button
+              onClick={() => setTab('active')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition ${
+                tab === 'active' ? 'bg-emerald-600 text-white' : 'text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              Aktif ({bookings.length})
+            </button>
+            <button
+              onClick={() => setTab('history')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition ${
+                tab === 'history' ? 'bg-emerald-600 text-white' : 'text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              Riwayat ({history.length})
+            </button>
+          </div>
         </div>
 
         {error && (
@@ -129,14 +181,28 @@ export default function MyBookingsPage() {
 
         {loading ? (
           <div className="text-center py-12 text-slate-500">Memuat...</div>
-        ) : bookings.length === 0 ? (
+        ) : list.length === 0 ? (
           <div className="bg-white rounded-xl shadow-md p-12 text-center">
-            <p className="text-slate-500 mb-4">Belum ada booking</p>
+            <p className="text-slate-500 mb-4">
+              {tab === 'active' ? 'Belum ada booking aktif' : 'Belum ada riwayat booking'}
+            </p>
+            {tab === 'active' && (
+              <button
+                onClick={() => navigate('/booking')}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
+              >
+                Buat Booking
+              </button>
+            )}
           </div>
         ) : (
           <div className="space-y-4">
-            {bookings.map((booking) => {
+            {list.map((booking) => {
               const status = statusLabels[booking.status] || { label: booking.status, color: 'bg-slate-100 text-slate-700' };
+              const lastPayment = booking.payments && booking.payments.length > 0
+                ? booking.payments[booking.payments.length - 1]
+                : null;
+
               return (
                 <div key={booking.id} className="bg-white rounded-xl shadow-md p-6">
                   <div className="flex flex-wrap justify-between items-start gap-4 mb-4">
@@ -167,7 +233,7 @@ export default function MyBookingsPage() {
                   </div>
 
                   <div className="flex flex-wrap gap-3">
-                    {booking.status === 'pending_payment' && (
+                    {booking.status === 'pending_payment' && tab === 'active' && (
                       <>
                         <button
                           onClick={() => openPay(booking)}
@@ -183,9 +249,22 @@ export default function MyBookingsPage() {
                         </button>
                       </>
                     )}
-                    {booking.payments && booking.payments.length > 0 && (
+                    {['confirmed', 'checked_in', 'completed'].includes(booking.status) && (
+                      <button
+                        onClick={() => setTicket(booking)}
+                        className="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-sm font-medium transition"
+                      >
+                        Lihat Tiket
+                      </button>
+                    )}
+                    {lastPayment && (
                       <div className="text-sm text-slate-500 self-center">
-                        Pembayaran terakhir: {booking.payments[booking.payments.length - 1].status}
+                        Pembayaran: {paymentStatusLabels[lastPayment.status] ?? lastPayment.status}
+                        {lastPayment.status === 'failed' && lastPayment.rejection_reason && (
+                          <span className="block text-xs text-red-500">
+                            Alasan: {lastPayment.rejection_reason}
+                          </span>
+                        )}
                       </div>
                     )}
                   </div>
@@ -195,6 +274,8 @@ export default function MyBookingsPage() {
           </div>
         )}
       </div>
+
+      {ticket && <TicketModal booking={ticket} onClose={() => setTicket(null)} />}
 
       {payFor && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">

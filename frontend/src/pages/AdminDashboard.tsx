@@ -95,7 +95,9 @@ export default function AdminDashboard() {
       <div className="max-w-7xl mx-auto">
         <div className="mb-8 flex flex-wrap justify-between items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Dashboard Admin</h1>
+            <h1 className="text-3xl font-bold text-slate-900">
+              {isSuperadmin ? 'Dashboard Global' : 'Dashboard Cabang'}
+            </h1>
             <p className="text-slate-600 mt-2">Statistik dan performa operasional</p>
           </div>
           <Link

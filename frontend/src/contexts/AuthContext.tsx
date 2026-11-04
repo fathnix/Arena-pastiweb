@@ -18,6 +18,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (data: { name: string; email: string; password: string; password_confirmation: string }) => Promise<void>;
   logout: () => Promise<void>;
+  refresh: () => Promise<void>;
   isAuthenticated: boolean;
   isAdmin: boolean;
   isCustomer: boolean;
@@ -85,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isCustomer = user?.role === 'customer';
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, isAuthenticated, isAdmin, isCustomer }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, refresh: fetchUser, isAuthenticated, isAdmin, isCustomer }}>
       {children}
     </AuthContext.Provider>
   );

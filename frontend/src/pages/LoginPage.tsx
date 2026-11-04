@@ -86,12 +86,30 @@ export default function LoginPage() {
           </div>
 
           <div className="mt-8 pt-6 border-t border-slate-200">
-            <p className="text-xs text-slate-500 font-medium mb-2">Test Accounts:</p>
-            <div className="space-y-1 text-xs text-slate-600">
-              <div>Superadmin: superadmin@test.com</div>
-              <div>Admin: admin@test.com</div>
-              <div>Customer: customer@test.com</div>
-              <div className="text-slate-500">Password: password</div>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+              Akun Demo (klik untuk isi)
+            </p>
+            <div className="space-y-2">
+              {[
+                { label: 'Superadmin', email: 'admin@gmail.com' },
+                { label: 'Admin / Kasir', email: 'kasir@gmail.com' },
+                { label: 'Customer', email: 'cust@gmail.com' },
+              ].map((account) => (
+                <button
+                  key={account.email}
+                  type="button"
+                  onClick={() => {
+                    setEmail(account.email);
+                    setPassword('password');
+                    setError('');
+                  }}
+                  className="w-full flex items-center justify-between gap-2 text-left text-xs bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 rounded-lg px-3 py-2 transition"
+                >
+                  <span className="font-medium text-slate-700">{account.label}</span>
+                  <span className="font-mono text-slate-500">{account.email}</span>
+                </button>
+              ))}
+              <p className="text-xs text-slate-400 pt-1">Semua akun menggunakan password: password</p>
             </div>
           </div>
         </div>
