@@ -8,6 +8,7 @@ use App\Models\TimeSlot;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -18,64 +19,103 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create main branch
-        $branch = Branch::create([
-            'name' => 'Arena Pasti Pusat',
-            'code' => 'ARP',
-            'address' => 'Jl. Olahraga No. 123, Jakarta',
-            'phone' => '021-12345678',
-            'timezone' => 'Asia/Jakarta',
-            'is_active' => true,
-        ]);
+        $password = Hash::make('password');
 
-        // Create users
-        $superadmin = User::create([
-            'branch_id' => null,
-            'name' => 'Superadmin',
-            'email' => 'superadmin@arenapasti.test',
-            'phone' => '081234567890',
-            'role' => 'superadmin',
-            'password' => bcrypt('password'),
-            'is_active' => true,
-        ]);
+        $pusat = Branch::updateOrCreate(
+            ['code' => 'ARP'],
+            [
+                'name' => 'Arena Pasti Pusat',
+                'address' => 'Jl. Olahraga No. 123, Jakarta',
+                'phone' => '021-12345678',
+                'timezone' => 'Asia/Jakarta',
+                'is_active' => true,
+            ]
+        );
 
-        $admin = User::create([
-            'branch_id' => $branch->id,
-            'name' => 'Admin Pusat',
-            'email' => 'admin@arenapasti.test',
-            'phone' => '081234567891',
-            'role' => 'admin',
-            'password' => bcrypt('password'),
-            'is_active' => true,
-        ]);
+        $selatan = Branch::updateOrCreate(
+            ['code' => 'ARS'],
+            [
+                'name' => 'Arena Pasti Cabang Selatan',
+                'address' => 'Jl. Raya Selatan No. 45, Jakarta',
+                'phone' => '021-87654321',
+                'timezone' => 'Asia/Jakarta',
+                'is_active' => true,
+            ]
+        );
 
-        $customer = User::create([
-            'branch_id' => null,
-            'name' => 'Customer Demo',
-            'email' => 'customer@arenapasti.test',
-            'phone' => '081234567892',
-            'role' => 'customer',
-            'password' => bcrypt('password'),
-            'is_active' => true,
-        ]);
+        $users = [
+            [
+                'email' => 'superadmin@arenapasti.test',
+                'name' => 'Superadmin',
+                'phone' => '081234567890',
+                'role' => 'superadmin',
+                'branch_id' => null,
+            ],
+            [
+                'email' => 'admin@arenapasti.test',
+                'name' => 'Admin Pusat',
+                'phone' => '081234567891',
+                'role' => 'admin',
+                'branch_id' => $pusat->id,
+            ],
+            [
+                'email' => 'kasir@arenapasti.test',
+                'name' => 'Kasir Pusat',
+                'phone' => '081234567893',
+                'role' => 'admin',
+                'branch_id' => $pusat->id,
+            ],
+            [
+                'email' => 'admin.selatan@arenapasti.test',
+                'name' => 'Admin Cabang Selatan',
+                'phone' => '081234567894',
+                'role' => 'admin',
+                'branch_id' => $selatan->id,
+            ],
+            [
+                'email' => 'customer@arenapasti.test',
+                'name' => 'Customer Demo',
+                'phone' => '081234567892',
+                'role' => 'customer',
+                'branch_id' => null,
+            ],
+            [
+                'email' => 'customer2@arenapasti.test',
+                'name' => 'Customer Demo 2',
+                'phone' => '081234567895',
+                'role' => 'customer',
+                'branch_id' => null,
+            ],
+        ];
 
-        // Create time slots (08:00 - 23:00)
+        foreach ($users as $user) {
+            User::updateOrCreate(
+                ['email' => $user['email']],
+                [
+                    ...$user,
+                    'password' => $password,
+                    'is_active' => true,
+                ]
+            );
+        }
+
         for ($hour = 8; $hour < 23; $hour++) {
             $start = sprintf('%02d:00', $hour);
             $end = sprintf('%02d:00', $hour + 1);
 
-            TimeSlot::create([
-                'label' => $start.' - '.$end,
-                'start_time' => $start,
-                'end_time' => $end,
-                'sort_order' => $hour - 8,
-                'is_active' => true,
-            ]);
+            TimeSlot::updateOrCreate(
+                ['start_time' => $start, 'end_time' => $end],
+                [
+                    'label' => $start.' - '.$end,
+                    'sort_order' => $hour - 8,
+                    'is_active' => true,
+                ]
+            );
         }
 
-        // Create fields
         $fields = [
             [
+                'branch_id' => $pusat->id,
                 'name' => 'Lapangan A',
                 'slug' => 'lapangan-a',
                 'type' => 'Vinyl',
@@ -84,6 +124,7 @@ class DatabaseSeeder extends Seeder
                 'description' => 'Lapangan vinyl ukuran standar dengan pencahayaan LED',
             ],
             [
+                'branch_id' => $pusat->id,
                 'name' => 'Lapangan B',
                 'slug' => 'lapangan-b',
                 'type' => 'Interlock',
@@ -92,6 +133,7 @@ class DatabaseSeeder extends Seeder
                 'description' => 'Lapangan interlock premium dengan rumput sintetis',
             ],
             [
+                'branch_id' => $pusat->id,
                 'name' => 'Lapangan C',
                 'slug' => 'lapangan-c',
                 'type' => 'Matras',
@@ -99,16 +141,28 @@ class DatabaseSeeder extends Seeder
                 'base_hourly_rate' => 120000,
                 'description' => 'Lapangan matras untuk futsal indoor',
             ],
+            [
+                'branch_id' => $selatan->id,
+                'name' => 'Lapangan Selatan 1',
+                'slug' => 'lapangan-selatan-1',
+                'type' => 'Sintetis',
+                'capacity' => 12,
+                'base_hourly_rate' => 130000,
+                'description' => 'Lapangan sintetis cabang selatan',
+            ],
         ];
 
         foreach ($fields as $fieldData) {
-            Field::create(array_merge($fieldData, [
-                'branch_id' => $branch->id,
-                'open_time' => '08:00',
-                'close_time' => '23:00',
-                'slot_duration' => 60,
-                'status' => 'active',
-            ]));
+            Field::updateOrCreate(
+                ['slug' => $fieldData['slug']],
+                [
+                    ...$fieldData,
+                    'open_time' => '08:00',
+                    'close_time' => '23:00',
+                    'slot_duration' => 60,
+                    'status' => 'active',
+                ]
+            );
         }
     }
 }

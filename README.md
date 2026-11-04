@@ -38,11 +38,32 @@ npm run dev
 
 Frontend akan jalan di `http://localhost:5173`, backend di `http://localhost:8000`.
 
+Untuk akses dari perangkat lain di jaringan yang sama, jalankan backend dengan host terbuka:
+
+```bash
+php artisan serve --host=0.0.0.0 --port=8000
+```
+
+Lalu buka `http://<IP-LOKAL>:5173`. IP lokal bisa dicek dengan `ip route get 1.1.1.1`.
+
 ## Default Accounts
 
-- **Superadmin**: `superadmin@arenapasti.test` / `password`
-- **Admin**: `admin@arenapasti.test` / `password`
-- **Customer**: `customer@arenapasti.test` / `password`
+Semua akun memakai password `password`.
+
+| Role | Email | Cabang |
+|---|---|---|
+| Superadmin | `superadmin@arenapasti.test` | Semua |
+| Admin | `admin@arenapasti.test` | Arena Pasti Pusat |
+| Kasir | `kasir@arenapasti.test` | Arena Pasti Pusat |
+| Admin | `admin.selatan@arenapasti.test` | Arena Pasti Cabang Selatan |
+| Customer | `customer@arenapasti.test` | - |
+| Customer | `customer2@arenapasti.test` | - |
+
+Seeder bersifat idempotent, jadi aman dijalankan ulang:
+
+```bash
+php artisan db:seed
+```
 
 ## API Documentation
 
