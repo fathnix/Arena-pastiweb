@@ -21,7 +21,7 @@ export default function RegisterPage() {
 
     try {
       await register(formData);
-      navigate('/');
+      navigate('/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Registrasi gagal');
     } finally {

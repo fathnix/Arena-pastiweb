@@ -38,7 +38,7 @@ export default function Layout({ children }: { children: ReactNode }) {
   const navItems: NavItem[] =
     role === 'customer'
       ? [
-          { to: '/', label: 'Dashboard', end: true },
+          { to: '/dashboard', label: 'Dashboard', end: true },
           { to: '/booking', label: 'Booking' },
           { to: '/my-bookings', label: 'Booking Saya' },
           { to: '/profile', label: 'Profil' },
@@ -68,7 +68,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center space-x-6">
-              <Link to={role === 'customer' ? '/' : '/admin'} className="flex items-center gap-2">
+              <Link to={role === 'customer' ? '/dashboard' : '/admin'} className="flex items-center gap-2">
                 <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center text-white font-bold text-sm">
                   AP
                 </span>
